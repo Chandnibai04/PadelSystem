@@ -22,8 +22,8 @@ app.use(
   })
 );
 
-// Explicitly handle preflight OPTIONS requests across-the-board to prevent browser blocking
-app.options("*", cors());
+// Explicitly handle preflight OPTIONS requests using a RegExp to avoid Express 5 wildcard crashes
+app.options(/.*/, cors());
 
 // 2. Body Parser (Must be before request logging middleware to access req.body)
 app.use(express.json());
