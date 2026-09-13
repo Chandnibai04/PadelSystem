@@ -6,9 +6,8 @@ An enterprise-grade, full-stack MERN (MongoDB, Express.js, React.js, Node.js) we
 
 ## 🚀 Live Demo & Links
 
-* **Frontend App (Vercel):** [Insert Vercel Link Here]
-* **Backend API (Vercel):** [Insert Backend Deployment URL Here]
-* **GitHub Repository:** [Insert GitHub Link Here]
+* **Frontend App (Vercel):** [right now few issue going on the code producion side ]
+* **Backend API (Vercel):** (https://padel-backend-tau.vercel.app/)
 
 ---
 
