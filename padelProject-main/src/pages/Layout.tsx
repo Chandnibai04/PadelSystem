@@ -1,8 +1,7 @@
 // src/components/Layout.tsx
 import { Outlet } from "react-router-dom";
 import NavigationMenu from "@/components/ui/navigation-menu";
-import  Footer  from "@/components/ui/Footer";
-
+import { Footer } from "@/components/ui/Footer";
 export default function Layout() {
   return (
     <>

@@ -7,6 +7,8 @@ import VisaMastercardLogo from "@/assets/mastercard.png";
 import JazzCashLogo from "@/assets/jazzcash.png";
 import EasyPaisaLogo from "@/assets/easypaisa.png";
 
+// Base API URL configuration
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://padel-backend-tau.vercel.app";
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface BookingData {
@@ -39,7 +41,7 @@ export default function PaymentPage() {
   const calculateTax = () => calculateCourtPrice() * 0.2;
   const calculateTotalAmount = () => calculateCourtPrice() + calculateTax();
 
-  // ✅ Stripe Checkout Form
+  // ✅ Stripe Checkout Form Component
   const CheckoutForm = () => {
     const stripe = useStripe();
     const elements = useElements();
@@ -57,12 +59,12 @@ export default function PaymentPage() {
         if (!token) throw new Error("Authentication token missing");
 
         // Convert PKR → USD cents
-        const PKR_TO_USD = 280; 
+        const PKR_TO_USD = 280;
         const usdCents = Math.round((calculateTotalAmount() / PKR_TO_USD) * 100);
         if (usdCents < 50) throw new Error("Minimum payment is $0.50");
 
         // 1️⃣ Create payment intent from backend
-        const res = await fetch("http://localhost:5000/api/payments/create-payment-intent", {
+        const res = await fetch(`${API_BASE_URL}/api/payments/create-payment-intent`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -90,13 +92,13 @@ export default function PaymentPage() {
           throw new Error(result.error.message);
         }
 
-        // Handle different payment statuses
+        // Handle payment status
         const paymentIntent = result.paymentIntent;
         console.log("Payment intent status:", paymentIntent?.status);
 
         if (paymentIntent?.status === "succeeded" || paymentIntent?.status === "processing") {
           // Create booking in database after successful/processing payment
-          const bookingResponse = await fetch("http://localhost:5000/api/bookings", {
+          const bookingResponse = await fetch(`${API_BASE_URL}/api/bookings`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -211,10 +213,14 @@ export default function PaymentPage() {
           ))}
         </div>
 
-        {/* Stripe Form */}
-        {paymentMethod === "card" && <Elements stripe={stripePromise}><CheckoutForm /></Elements>}
+        {/* Stripe Card Form */}
+        {paymentMethod === "card" && (
+          <Elements stripe={stripePromise}>
+            <CheckoutForm />
+          </Elements>
+        )}
 
-        {/* Other payment */}
+        {/* Non-Card Payment Submit (JazzCash, EasyPaisa, Pay at Venue) */}
         {paymentMethod !== "card" && paymentMethod && (
           <div className="flex gap-4 pt-4">
             <button
@@ -237,7 +243,7 @@ export default function PaymentPage() {
                   }
 
                   // Create booking in database for non-card payments
-                  const bookingResponse = await fetch("http://localhost:5000/api/bookings", {
+                  const bookingResponse = await fetch(`${API_BASE_URL}/api/bookings`, {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",

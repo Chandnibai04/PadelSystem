@@ -425,7 +425,7 @@ const Home = () => {
     const fetchCourts = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:5000/api/courts");
+        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/courts`);
         if (!response.ok) throw new Error("Failed to fetch courts");
         const data = await response.json();
         setAllCourts(data);

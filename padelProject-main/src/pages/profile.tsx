@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import axios from "axios";
 import {
   User,
   Save,
@@ -10,10 +12,9 @@ import {
   CalendarIcon,
   MapPin,
   CreditCard,
-  ClockIcon
+  ClockIcon,
 } from "lucide-react";
 
-// User interface
 interface UserData {
   id: string;
   name: string;
@@ -22,23 +23,26 @@ interface UserData {
   profilePhoto: string;
 }
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Profile = () => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState<UserData>({
     id: "",
     name: "",
     email: "",
     phone: "",
-    profilePhoto: ""
+    profilePhoto: "",
   });
   const [tempName, setTempName] = useState("");
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
 
   // Load user data from localStorage on component mount
   useEffect(() => {
-    // Try multiple possible keys where user data might be stored
-    const savedUserData = localStorage.getItem("user") ||
+    const savedUserData =
+      localStorage.getItem("user") ||
       localStorage.getItem("userData") ||
       localStorage.getItem("currentUser");
 
@@ -48,7 +52,6 @@ const Profile = () => {
         setUserData(parsedData);
         setTempName(parsedData.name);
 
-        // Also update any other potential user storage locations
         localStorage.setItem("user", JSON.stringify(parsedData));
         localStorage.setItem("userData", JSON.stringify(parsedData));
       } catch (error) {
@@ -63,15 +66,15 @@ const Profile = () => {
         court: "Padel Pro Court",
         date: "2023-10-15",
         time: "16:00 - 17:30",
-        price: "Rs. 1200"
+        price: "Rs. 1200",
       },
       {
         id: 2,
         court: "Elite Smash Zone",
         date: "2023-10-10",
         time: "18:00 - 19:30",
-        price: "Rs. 1000"
-      }
+        price: "Rs. 1000",
+      },
     ];
     setRecentBookings(bookings);
   }, []);
@@ -81,33 +84,43 @@ const Profile = () => {
     setTempName(e.target.value);
   };
 
-  // Save user data to localStorage
+  // Save user data to backend and localStorage
   const handleSave = async () => {
     const updatedUserData = {
       ...userData,
-      name: tempName
+      name: tempName,
     };
 
+    setLoading(true);
     try {
-      // send update request to backend
-      await fetch(`http://localhost:5000/api/users/${userData.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedUserData),
-      });
-
+      const token = localStorage.getItem("token");
+      
+      await axios.put(
+        `${API_URL}/api/users/${userData.id}`,
+        updatedUserData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+        }
+      );
 
       // update local state + storage
       setUserData(updatedUserData);
       localStorage.setItem("user", JSON.stringify(updatedUserData));
       localStorage.setItem("userData", JSON.stringify(updatedUserData));
       localStorage.setItem("currentUser", JSON.stringify(updatedUserData));
+
+      toast.success("✅ Profile updated successfully!");
       setIsEditing(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update user:", err);
+      toast.error(err.response?.data?.error || "❌ Failed to update profile");
+    } finally {
+      setLoading(false);
     }
   };
-
 
   // Cancel editing
   const handleCancel = () => {
@@ -153,7 +166,9 @@ const Profile = () => {
             <div className="flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-[#94A3B8] mb-1">Name</label>
+                  <label className="block text-sm font-medium text-[#94A3B8] mb-1">
+                    Name
+                  </label>
                   {isEditing ? (
                     <Input
                       value={tempName}
@@ -165,15 +180,21 @@ const Profile = () => {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#94A3B8] mb-1">Email</label>
+                  <label className="block text-sm font-medium text-[#94A3B8] mb-1">
+                    Email
+                  </label>
                   <p className="text-white">{userData.email}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#94A3B8] mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-[#94A3B8] mb-1">
+                    Phone
+                  </label>
                   <p className="text-white">{userData.phone}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#94A3B8] mb-1">User ID</label>
+                  <label className="block text-sm font-medium text-[#94A3B8] mb-1">
+                    User ID
+                  </label>
                   <p className="text-white">{userData.id}</p>
                 </div>
               </div>
@@ -183,9 +204,11 @@ const Profile = () => {
                 <div className="flex gap-3">
                   <Button
                     onClick={handleSave}
+                    disabled={loading}
                     className="bg-[#adef0e] text-[#0F172A] hover:bg-[#cfff2e]"
                   >
-                    <Save className="mr-2 h-4 w-4" /> Save Changes
+                    <Save className="mr-2 h-4 w-4" />
+                    {loading ? "Saving..." : "Save Changes"}
                   </Button>
                   <Button
                     onClick={handleCancel}
@@ -210,15 +233,22 @@ const Profile = () => {
 
         {/* Recent Bookings */}
         <div className="bg-[#1E293B] rounded-xl p-6 shadow-lg">
-          <h2 className="text-2xl font-bold text-[#adef0e] mb-6">Recent Bookings</h2>
+          <h2 className="text-2xl font-bold text-[#adef0e] mb-6">
+            Recent Bookings
+          </h2>
 
           {recentBookings.length > 0 ? (
             <div className="space-y-4">
               {recentBookings.map((booking) => (
-                <div key={booking.id} className="bg-[#0F172A] rounded-lg p-4 border border-[#334155]">
+                <div
+                  key={booking.id}
+                  className="bg-[#0F172A] rounded-lg p-4 border border-[#334155]"
+                >
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-white">{booking.court}</h3>
+                      <h3 className="text-lg font-semibold text-white">
+                        {booking.court}
+                      </h3>
                       <div className="flex items-center mt-2 text-[#94A3B8]">
                         <CalendarIcon className="h-4 w-4 mr-2" />
                         <span>{booking.date}</span>
@@ -229,7 +259,9 @@ const Profile = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-[#adef0e] font-semibold">{booking.price}</span>
+                      <span className="text-[#adef0e] font-semibold">
+                        {booking.price}
+                      </span>
                       <Button
                         onClick={() => navigate("/booking")}
                         variant="outline"
@@ -244,7 +276,9 @@ const Profile = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-[#94A3B8] mb-4">You haven't made any bookings yet.</p>
+              <p className="text-[#94A3B8] mb-4">
+                You haven't made any bookings yet.
+              </p>
               <Button
                 onClick={() => navigate("/courts")}
                 className="bg-[#adef0e] text-[#0F172A] hover:bg-[#cfff2e]"

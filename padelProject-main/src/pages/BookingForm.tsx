@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { format, addHours } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -9,11 +9,15 @@ interface Court {
   _id: string;
   name: string;
   type: string;
-  price: number; // updated field
+  price: number;
   isAvailable: boolean;
+  location?: string;
+  area?: string;
+  city?: string;
 }
 
 interface UserData {
+  _id?: string;
   name: string;
   email: string;
   phone: string;
@@ -23,11 +27,11 @@ interface BookingFormData {
   name: string;
   email: string;
   phone: string;
-  court: string; // this is courtId
+  court: string;
   paymentMethod: string;
 }
 
-const durationOptions = [
+const DURATION_OPTIONS = [
   { value: 1, label: "1 hour" },
   { value: 2, label: "2 hours" },
   { value: 3, label: "3 hours" },
@@ -43,7 +47,6 @@ export default function BookingForm() {
   const [duration, setDuration] = useState<number>(1);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [emailError, setEmailError] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [courts, setCourts] = useState<Court[]>([]);
   const [isLoadingCourts, setIsLoadingCourts] = useState(true);
@@ -58,49 +61,51 @@ export default function BookingForm() {
     paymentMethod: "",
   });
 
-  // Fetch courts
+  // Fetch courts and filter based on incoming location parameter
   useEffect(() => {
     const fetchCourts = async () => {
       try {
         setIsLoadingCourts(true);
         const response = await fetch("http://localhost:5000/api/courts");
         if (!response.ok) throw new Error(`Failed to fetch courts: ${response.status}`);
-        const data = await response.json();
-
-        // Filter courts if location is selected
+        
+        const data: Court[] = await response.json();
         let filteredCourts = data;
-        if (passedCourt && passedCourt.location) {
+
+        if (passedCourt?.location) {
+          const searchLoc = passedCourt.location.toLowerCase();
           setSelectedLocation(passedCourt.location);
-          // Filter courts by location (case-insensitive)
-          filteredCourts = data.filter((court: Court) =>
-            court.location?.toLowerCase().includes(passedCourt.location.toLowerCase()) ||
-            court.area?.toLowerCase().includes(passedCourt.location.toLowerCase()) ||
-            court.city?.toLowerCase().includes(passedCourt.location.toLowerCase())
+          
+          filteredCourts = data.filter((court) =>
+            [court.location, court.area, court.city].some(
+              (field) => field?.toLowerCase().includes(searchLoc)
+            )
           );
         }
 
         setCourts(filteredCourts);
 
-        // Auto-select court if passed from home page
-        if (passedCourt && passedCourt._id) {
+        if (passedCourt?._id) {
           setFormData((prev) => ({ ...prev, court: passedCourt._id }));
         }
 
         setCourtError("");
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error fetching courts:", err);
         setCourtError("Failed to load courts. Please try again later.");
       } finally {
         setIsLoadingCourts(false);
       }
     };
+
     fetchCourts();
   }, [passedCourt]);
 
-  // Check if user logged in
+  // Sync authentication state from localStorage
   useEffect(() => {
     const userData = localStorage.getItem("user");
     const token = localStorage.getItem("token");
+
     if (userData && token) {
       try {
         const user: UserData = JSON.parse(userData);
@@ -112,7 +117,7 @@ export default function BookingForm() {
           phone: user.phone || "",
         }));
       } catch (e) {
-        console.error(e);
+        console.error("Failed to parse stored user data:", e);
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         setIsLoggedIn(false);
@@ -120,23 +125,29 @@ export default function BookingForm() {
     }
   }, []);
 
-  // Generate timeslots and filter by availability
+  // Generate mock time slots when date changes
   useEffect(() => {
     if (date) {
       const times: string[] = [];
-      for (let hour = 8; hour <= 22; hour++) times.push(`${hour.toString().padStart(2, "0")}:00`);
+      for (let hour = 8; hour <= 22; hour++) {
+        times.push(`${hour.toString().padStart(2, "0")}:00`);
+      }
       setAvailableTimes(times);
       setSelectedTime("");
     }
-  }, [date, formData.court]); // Re-run when court changes to check availability
+  }, [date, formData.court]);
+
+  const selectedCourt = useMemo(
+    () => courts.find((c) => c._id === formData.court),
+    [courts, formData.court]
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (name === "email") setEmailError("");
   };
 
-  const calculateEndTime = () => {
+  const calculateEndTime = (): string => {
     if (!selectedTime) return "";
     const [hours, minutes] = selectedTime.split(":").map(Number);
     const startDate = date ? new Date(date) : new Date();
@@ -145,24 +156,31 @@ export default function BookingForm() {
     return format(endDate, "HH:mm");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.email || !formData.phone || !formData.court || !date || !selectedTime) {
-      alert("Please fill all booking details");
+      alert("Please fill in all required booking details.");
       return;
     }
 
     if (!isLoggedIn) {
-      alert("Please login first to continue to payment.");
+      alert("Please log in first to proceed to payment.");
       navigate("/login");
       return;
     }
 
-    const selectedCourt = courts.find(c => c._id === formData.court);
     if (!selectedCourt) {
       alert("Please select a valid court.");
       return;
+    }
+
+    let storedUserId = "";
+    try {
+      const parsedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      storedUserId = parsedUser._id || "";
+    } catch {
+      storedUserId = "";
     }
 
     const totalPrice = (selectedCourt.price || 0) * duration;
@@ -176,10 +194,9 @@ export default function BookingForm() {
       date: date.toISOString(),
       time: selectedTime,
       duration,
-      userId: JSON.parse(localStorage.getItem("user") || "{}")._id
+      userId: storedUserId,
     };
 
-    // Navigate to payment with booking data
     navigate("/payment", { state: { bookingData } });
   };
 
@@ -194,7 +211,7 @@ export default function BookingForm() {
             placeholder="Full Name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full p-2 rounded-md bg-[#1e293b] text-white border border-[#84cc16]"
+            className="w-full p-2 rounded-md bg-[#1e293b] text-white border border-[#84cc16] disabled:opacity-60"
             required
             disabled={isLoggedIn}
           />
@@ -205,7 +222,7 @@ export default function BookingForm() {
             placeholder="Email Address"
             value={formData.email}
             onChange={handleChange}
-            className="w-full p-2 rounded-md bg-[#1e293b] text-white border border-[#84cc16]"
+            className="w-full p-2 rounded-md bg-[#1e293b] text-white border border-[#84cc16] disabled:opacity-60"
             required
             disabled={isLoggedIn}
           />
@@ -216,7 +233,7 @@ export default function BookingForm() {
             placeholder="Phone Number"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full p-2 rounded-md bg-[#1e293b] text-white border border-[#84cc16]"
+            className="w-full p-2 rounded-md bg-[#1e293b] text-white border border-[#84cc16] disabled:opacity-60"
             required
             disabled={isLoggedIn}
           />
@@ -240,40 +257,46 @@ export default function BookingForm() {
               ) : courts.length === 0 ? (
                 <option value="" disabled>No courts available in this area</option>
               ) : (
-                courts.map(court => (
+                courts.map((court) => (
                   <option key={court._id} value={court._id}>
-                    {court.name} - Rs. {court.price}/hour {court.location ? `(${court.location})` : ''}
+                    {court.name} - Rs. {court.price}/hour {court.location ? `(${court.location})` : ""}
                   </option>
                 ))
               )}
             </select>
           </div>
 
-          {/* Schedule */}
+          {/* Schedule Trigger */}
           <Popover>
             <PopoverTrigger asChild>
-              <button type="button" className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-[#84cc16] bg-[#1e293b]">
+              <button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md border border-[#84cc16] bg-[#1e293b] hover:bg-[#283549] transition-colors"
+              >
                 <CalendarIcon className="h-5 w-5 text-[#84cc16]" />
                 <span>
-                  {date && selectedTime 
-                    ? `${format(date, "PPP")} at ${selectedTime} for ${duration} hour${duration > 1 ? 's' : ''}` 
+                  {date && selectedTime
+                    ? `${format(date, "PPP")} at ${selectedTime} for ${duration} hour${duration > 1 ? "s" : ""}`
                     : "Select Schedule"}
                 </span>
               </button>
             </PopoverTrigger>
             <PopoverContent className="bg-[#0f172a] p-4 rounded-xl border border-[#84cc16] space-y-4">
               <Calendar mode="single" selected={date} onSelect={setDate} className="bg-[#0f172a] text-white" />
+              
               {date && (
                 <>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white">Select Time Slot</label>
                     <div className="grid grid-cols-3 gap-2">
-                      {availableTimes.map(time => (
+                      {availableTimes.map((time) => (
                         <button
                           key={time}
                           type="button"
                           onClick={() => setSelectedTime(time)}
-                          className={`py-2 rounded-md text-sm ${selectedTime === time ? "bg-[#84cc16] text-black" : "bg-[#1e293b] text-white"}`}
+                          className={`py-2 rounded-md text-sm transition-colors ${
+                            selectedTime === time ? "bg-[#84cc16] text-black font-semibold" : "bg-[#1e293b] text-white"
+                          }`}
                         >
                           {time}
                         </button>
@@ -284,12 +307,14 @@ export default function BookingForm() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white">Select Duration</label>
                     <div className="grid grid-cols-4 gap-2">
-                      {durationOptions.map(option => (
+                      {DURATION_OPTIONS.map((option) => (
                         <button
                           key={option.value}
                           type="button"
                           onClick={() => setDuration(option.value)}
-                          className={`py-2 rounded-md text-sm ${duration === option.value ? "bg-[#84cc16] text-black" : "bg-[#1e293b] text-white"}`}
+                          className={`py-2 rounded-md text-sm transition-colors ${
+                            duration === option.value ? "bg-[#84cc16] text-black font-semibold" : "bg-[#1e293b] text-white"
+                          }`}
                         >
                           {option.label}
                         </button>
@@ -301,23 +326,35 @@ export default function BookingForm() {
             </PopoverContent>
           </Popover>
 
-          {/* Summary */}
-          {date && selectedTime && formData.court && (
+          {/* Booking Summary Card */}
+          {date && selectedTime && selectedCourt && (
             <div className="p-4 bg-[#0f172a] rounded-lg border border-[#84cc16]">
               <h3 className="font-semibold text-[#84cc16] mb-2">Booking Summary</h3>
               <div className="text-sm space-y-1">
-                <div className="flex justify-between"><span>Court:</span><span>{courts.find(c => c._id === formData.court)?.name}</span></div>
-                <div className="flex justify-between"><span>Date & Time:</span><span>{format(date, "PPP")} at {selectedTime} - {calculateEndTime()}</span></div>
-                <div className="flex justify-between"><span>Duration:</span><span>{duration} hour{duration > 1 ? 's' : ''}</span></div>
-                <div className="flex justify-between font-semibold border-t pt-1 mt-1">
+                <div className="flex justify-between">
+                  <span>Court:</span>
+                  <span>{selectedCourt.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Date & Time:</span>
+                  <span>{format(date, "PPP")} at {selectedTime} - {calculateEndTime()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Duration:</span>
+                  <span>{duration} hour{duration > 1 ? "s" : ""}</span>
+                </div>
+                <div className="flex justify-between font-semibold border-t border-gray-700 pt-2 mt-2">
                   <span>Total:</span>
-                  <span>Rs. {(courts.find(c => c._id === formData.court)?.price || 0) * duration}</span>
+                  <span className="text-[#84cc16]">Rs. {(selectedCourt.price || 0) * duration}</span>
                 </div>
               </div>
             </div>
           )}
 
-          <button type="submit" className="w-full py-2 rounded-md bg-[#84cc16] text-black hover:bg-[#65a30d] transition-all font-semibold">
+          <button
+            type="submit"
+            className="w-full py-2 rounded-md bg-[#84cc16] text-black hover:bg-[#65a30d] transition-all font-semibold"
+          >
             Proceed to Payment
           </button>
         </div>

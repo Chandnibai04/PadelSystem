@@ -29,7 +29,7 @@ export default function Courts() {
     // Fetch courts from backend - same endpoint as ManageCompanies
     const fetchCourts = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/courts");
+        const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/courts`);
         const data = await res.json();
         setCourts(data);
       } catch (err) {

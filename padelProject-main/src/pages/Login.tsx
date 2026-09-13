@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function Login() {
   const navigate = useNavigate();
   const { token } = useParams(); // check if reset-password token exists
@@ -29,42 +31,40 @@ export default function Login() {
 
   // ------------------- LOGIN -------------------
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  try {
-    const res = await axios.post("http://localhost:5000/api/users/login", {
-      emailOrPhone,
-      password,
-    });
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/users/login`, {
+        emailOrPhone,
+        password,
+      });
 
-    toast.success("✅ Login successful!");
+      toast.success("✅ Login successful!");
 
-    // Save token
-    localStorage.setItem("token", res.data.token);
+      // Save token
+      localStorage.setItem("token", res.data.token);
 
-    // Save user details
-    if (res.data.user) {
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      // Save user details
+      if (res.data.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+
+      navigate("/");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "❌ Login failed");
+    } finally {
+      setLoading(false);
     }
-
-    navigate("/");
-  } catch (err: any) {
-    toast.error(err.response?.data?.error || "❌ Login failed");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // ------------------- FORGOT PASSWORD -------------------
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/users/forgot-password",
-        { email: emailOrPhone }
-      );
+      const res = await axios.post(`${API_URL}/api/users/forgot-password`, {
+        email: emailOrPhone,
+      });
       toast.success(res.data.message || "✅ Reset link sent to email!");
       setShowForgotPassword(false);
     } catch (err: any) {
@@ -85,8 +85,8 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/users/reset-password/${token}`,  
-        { password , confirmPassword }
+        `${API_URL}/api/users/reset-password/${token}`,
+        { password, confirmPassword }
       );
       toast.success(res.data.message || "✅ Password reset successful!");
       navigate("/login");
@@ -218,10 +218,13 @@ export default function Login() {
             >
               {loading ? "Resetting..." : "Reset Password"}
             </Button>
-            
+
             <p className="text-sm text-center">
               <span
-                onClick={() => navigate("/login")}
+                onClick={() => {
+                  setShowResetPassword(false);
+                  navigate("/login");
+                }}
                 className="text-blue-300 cursor-pointer hover:underline mr-4"
               >
                 Back to Login
