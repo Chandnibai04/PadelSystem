@@ -8,25 +8,32 @@ import paymentRoutes from "./routes/payment.routes.js";
 
 const app = express();
 
-// Request logging middleware
+// 1. CORS setup
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      /\.vercel\.app$/,
+    ],
+    credentials: true,
+  })
+);
+
+// 2. Body Parser (Must be before request logging middleware to access req.body)
+app.use(express.json());
+
+// 3. Clean Request Logging Middleware
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`, req.body);
+  // Skip preflight OPTIONS requests to keep Vercel logs clean
+  if (req.method !== "OPTIONS") {
+    const hasBody = req.body && Object.keys(req.body).length > 0;
+    console.log(`[${req.method}] ${req.path}`, hasBody ? req.body : "");
+  }
   next();
 });
 
-// Configure CORS for local development and Vercel deployments
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    /\.vercel\.app$/ // Allows all Vercel frontend deployments
-  ],
-  credentials: true
-}));
-
-app.use(express.json());
-
-// Root health-check endpoint
+// Root Health Check Route
 app.get("/", (req, res) => {
   res.status(200).json({ status: "success", message: "Padel System Backend API is active!" });
 });
@@ -38,7 +45,7 @@ app.use("/api/email", emailRoutes);
 app.use("/api/courts", courtRoutes);
 app.use("/api/payments", paymentRoutes);
 
-// Error handling middleware
+// Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({ error: "Internal server error", details: err.message });
