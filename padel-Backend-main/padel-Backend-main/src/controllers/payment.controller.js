@@ -2,8 +2,7 @@ import Stripe from "stripe";
 import dotenv from "dotenv";
 dotenv.config();
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "dummy_key_for_boot");
 export const createPaymentIntent = async (req, res) => {
   try {
     const { amount } = req.body;
@@ -25,3 +24,5 @@ export const createPaymentIntent = async (req, res) => {
     res.status(500).json({ error: err.message || "Stripe error occurred" });
   }
 };
+
+export default stripe;
