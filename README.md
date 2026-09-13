@@ -65,3 +65,32 @@ padel-system/
     ├── components/             # Reusable UI components
     ├── pages/                  # Views (Booking, Payment, Receipt, Admin, Counter)
     └── App.jsx                 # Main application routing
+
+
+1. Clone the Repository
+Bash
+git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
+cd your-repo-name
+2. Backend Setup
+Bash
+cd padel-Backend-main
+npm install
+Create a .env file inside the backend folder and add your environment variables:
+
+Code snippet
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+STRIPE_SECRET_KEY=your_stripe_secret_key
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_email_app_password
+Start the backend development server:
+
+Bash
+npm run dev
+3. Frontend Setup
+Open a new terminal window, navigate to the root frontend directory, and run:
+
+Bash
+npm install
+npm run dev
