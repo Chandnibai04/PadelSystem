@@ -6,6 +6,10 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
+const VITE_API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://padel-backend-lfb6z27gr-chandni-bais-projects.vercel.app";
+
 export default function Signup() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -95,8 +99,7 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const res = await fetch(`${apiUrl}/api/users/signup`, {
+      const res = await fetch(`${VITE_API_BASE_URL}/api/users/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

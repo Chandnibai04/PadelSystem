@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://padel-backend-lfb6z27gr-chandni-bais-projects.vercel.app";
+
 // ------------------ TypeScript Interface ------------------
 interface Court {
   _id: string;
@@ -26,10 +28,10 @@ export default function Courts() {
   useEffect(() => {
     AOS.init({ duration: 1200, once: true });
 
-    // Fetch courts from backend - same endpoint as ManageCompanies
+    // Fetch courts from backend using dynamic VITE_API_BASE_URL
     const fetchCourts = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/courts`);
+        const res = await fetch(`${VITE_API_BASE_URL}/api/courts`);
         const data = await res.json();
         setCourts(data);
       } catch (err) {
@@ -129,7 +131,15 @@ export default function Courts() {
 
                   {/* Book Now */}
                   <Button
-                    onClick={() => navigate("/booking")}
+                    onClick={() => {
+                      const token = localStorage.getItem("token");
+                      if (!token) {
+                        alert("Please login first to book a court");
+                        navigate("/login");
+                      } else {
+                        navigate("/booking", { state: { courtId: court._id, court } });
+                      }
+                    }}
                     className="bg-transparent border text-[#adef0e] hover:bg-[#adef0e] hover:text-black transition-all"
                   >
                     Book Now

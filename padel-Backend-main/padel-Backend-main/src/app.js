@@ -17,8 +17,13 @@ app.use(
       /\.vercel\.app$/,
     ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// Explicitly handle preflight OPTIONS requests across-the-board to prevent browser blocking
+app.options("*", cors());
 
 // 2. Body Parser (Must be before request logging middleware to access req.body)
 app.use(express.json());

@@ -37,6 +37,7 @@ import "aos/dist/aos.css";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://padel-backend-lfb6z27gr-chandni-bais-projects.vercel.app";
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -330,8 +331,8 @@ const MapPopup: React.FC<MapPopupProps> = ({ onClose, onSelectLocation, initialL
               onClick={handleConfirmSelection}
               disabled={isLoading || !selectedAddress}
               className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Confirm This Location
+          >
+            Confirm This Location
             </button>
           </div>
         )}
@@ -358,10 +359,10 @@ const MapPopup: React.FC<MapPopupProps> = ({ onClose, onSelectLocation, initialL
               <Marker position={selectedLatLng}>
                 <Popup>
                   {selectedAddress || "Selected location"}
-                </Popup>
+              </Popup>
               </Marker>
             )}
-          </MapContainer>
+        </MapContainer>
 
           {/* Click instructions overlay */}
           {!selectedLatLng && (
@@ -378,17 +379,17 @@ const MapPopup: React.FC<MapPopupProps> = ({ onClose, onSelectLocation, initialL
             <button
               onClick={onClose}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
+          >
               Cancel
-            </button>
+          </button>
             <button
               onClick={handleConfirmSelection}
               disabled={isLoading || !selectedAddress}
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+          >
               Confirm Selection
-            </button>
-          </div>
+          </button>
+        </div>
         </div>
       </div>
     </div>
@@ -425,7 +426,7 @@ const Home = () => {
     const fetchCourts = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/courts`);
+        const response = await fetch(`${VITE_API_BASE_URL}/api/courts`);
         if (!response.ok) throw new Error("Failed to fetch courts");
         const data = await response.json();
         setAllCourts(data);
@@ -471,14 +472,6 @@ const Home = () => {
     const hour = i < 10 ? `0${i}` : `${i}`;
     return [`${hour}:00`, `${hour}:30`];
   }).flat();
-
-  // const formatDateTime = () => {
-  //   if (!date || !time) return "Select Schedule";
-  //   const [hours, minutes] = time.split(":");
-  //   const d = new Date(date);
-  //   d.setHours(parseInt(hours), parseInt(minutes));
-  //   return format(d, "PPP p");
-  // };
 
   const handleNearClick = () => {
     if (!userLocation) {
@@ -536,7 +529,7 @@ const Home = () => {
         params.append('available', 'true');
       }
 
-      const response = await fetch(`http://localhost:5000/api/courts/filter?${params.toString()}`);
+      const response = await fetch(`${VITE_API_BASE_URL}/api/courts/filter?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to filter courts");
 
       const data = await response.json();
@@ -692,11 +685,8 @@ const Home = () => {
 
       {/* SEARCH */}
       <div className="lg:-mt-40 z-30 relative flex justify-center">
-        {/* Reduced padding from py-4 to py-3 */}
         <div className="w-[80%] md:w-[80%] bg-[#0F172A]/50 px-4 md:px-8 py-3 rounded-xl border border-[#334155] -ml-2">
           <div className="flex flex-col md:flex-row gap-4 md:items-center">
-            {/* Area Input Width Reduced with Map Icon */}
-            {/* Area Input with Map Icon on Left */}
             <div className="flex items-center gap-2 w-full md:w-1/4 bg-[#0F172A] p-3 rounded-xl shadow border border-[#334155] hover:border-[#adef0e] transition-all">
               <button
                 onClick={() => setOpenMapPopup(true)}
@@ -713,7 +703,6 @@ const Home = () => {
             </div>
 
             <Popover>
-              {/* Date Popover Trigger Width Reduced */}
               <PopoverTrigger className="flex items-center gap-2 w-full md:w-1/5 bg-[#0F172A] p-3 rounded-xl shadow border border-[#334155] text-sm text-white hover:border-[#adef0e] transition-all">
                 <CalendarIcon className="w-4 h-4 text-[#adef0e]" />
                 {date ? format(date, "PPP") : "Select date"}
@@ -728,7 +717,6 @@ const Home = () => {
               </PopoverContent>
             </Popover>
 
-            {/* Time Select Width Reduced */}
             <select
               value={time}
               onChange={(e) => setTime(e.target.value)}
@@ -744,11 +732,7 @@ const Home = () => {
               ))}
             </select>
 
-            {/* New wrapper div for Search and Filter buttons */}
             <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-
-
-              {/* Filter Courts DropdownMenu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -800,7 +784,6 @@ const Home = () => {
         />
       )}
 
-      {/* Rest of the component remains the same */}
       {/* ABOUT */}
       <section className="mt-30 w-full flex flex-col md:flex-row h-auto" data-aos="fade-up">
         <div
@@ -855,137 +838,6 @@ const Home = () => {
             >
               <Film className="mr-2 h-4 w-4" /> Watch Now
             </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* WHY CHOOSE US */}
-      <section className="py-20 bg-[#0F172A]" data-aos="fade-up">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-4xl font-extrabold text-center text-white uppercase tracking-wide mb-4">
-            Why Choose PadelBooking?
-          </h2>
-          <p className="text-center text-[#94A3B8] text-lg mb-12 max-w-2xl mx-auto">
-            We go beyond just booking. PadelBooking delivers convenience, quality, and an unforgettable padel experience for players of all levels.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-            {[
-              {
-                title: "Flexible Timings",
-                desc: "Play when it suits you – early mornings, late nights, or anytime in between.",
-                icon: <Clock className="h-8 w-8 text-[#adef0e]" />,
-              },
-              {
-                title: "Premium Courts",
-                desc: "All courts meet international standards for turf, lighting, and overall design.",
-                icon: <Award className="h-8 w-8 text-[#adef0e]" />,
-              },
-              {
-                title: "Quick Bookings",
-                desc: "Instant booking system with live availability and no waiting.",
-                icon: <Zap className="h-8 w-8 text-[#adef0e]" />,
-              },
-              {
-                title: "Great Atmosphere",
-                desc: "Clean, well-maintained venues with an energetic and welcoming vibe.",
-                icon: <PartyPopper className="h-8 w-8 text-[#adef0e]" />,
-              },
-              {
-                title: "Seamless Experience",
-                desc: "From search to play – the smoothest way to get on court in seconds.",
-                icon: <Smartphone className="h-8 w-8 text-[#adef0e]" />,
-              },
-              {
-                title: "Trusted by Players",
-                desc: "Loved and recommended by padel communities across Pakistan.",
-                icon: <ThumbsUp className="h-8 w-8 text-[#adef0e]" />,
-              },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className="bg-[#1E293B] p-6 rounded-lg shadow hover:shadow-md hover:border-[#adef0e] border border-[#334155] transition text-left"
-              >
-                <div className="mb-4">{item.icon}</div>
-                <h3 className="text-xl font-semibold text-white mb-2">{item.title}</h3>
-                <p className="text-[#94A3B8] text-sm">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <section className="py-20 bg-[#0F172A]" data-aos="fade-up">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-extrabold text-center text-white tracking-wide mb-4">
-            TESTIMONIALS & REVIEWS
-          </h2>
-          <p className="text-center text-[#94A3B8] text-lg mb-12">
-            Hear from real players—why they love booking padel courts with us.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                text: "PadelBooking's hassle‑free booking made my weekend practice sessions seamless!",
-                name: "Ali Khan",
-                role: "Lahore Player",
-              },
-              {
-                text: "Court availability is always up-to-date and booking is fast. Love it!",
-                name: "Sara Ahmed",
-                role: "Islamabad Enthusiast",
-              },
-              {
-                text: "The intuitive interface and location options are a total game-changer.",
-                name: "Bilal Raza",
-                role: "Karachi Coach",
-              },
-            ].map((t, i) => (
-              <div key={i} className="bg-[#1E293B] rounded-lg p-8 shadow-lg border border-[#334155] hover:border-[#adef0e] text-center transition-all">
-                <div className="mx-auto w-16 h-16 rounded-full mb-4 border-2 border-[#adef0e] flex items-center justify-center bg-[#0F172A]">
-                  <ThumbsUp className="h-6 w-6 text-[#adef0e]" />
-                </div>
-                <p className="italic text-[#E2E8F0] mb-6">"{t.text}"</p>
-                <div className="font-semibold text-[#adef0e]">{t.name}</div>
-                <div className="text-sm text-[#94A3B8]">{t.role}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* READY TO PLAY SECTION */}
-      <section className="relative h-[60vh] w-full flex items-center justify-center" data-aos="fade-up">
-        <div
-          className="w-[90%] h-full bg-cover bg-center rounded-xl shadow-md relative"
-          style={{ backgroundImage: `url(${court1})` }}
-        >
-          <div className="absolute inset-0 bg-[#020617]/50 rounded-xl" />
-          <div className="absolute inset-0 flex items-center px-12">
-            <div className="max-w-2xl space-y-6 z-10">
-              <h2 className="text-4xl sm:text-5xl font-extrabold text-white">
-                READY TO PLAY?
-              </h2>
-              <h3 className="text-3xl sm:text-4xl italic font-extrabold text-[#adef0e] leading-tight">
-                BOOK YOUR.<br />COURTS NOW.
-              </h3>
-              <Button
-                onClick={() => navigate("/courts")}
-                className="bg-transparent border-1 text-[#adef0e] hover:bg-[#adef0e] hover:text-[#020617] transition-all"
-              >
-                <ChevronRight className="mr-2 h-5 w-5" /> Play Now
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* COURTS */}
-      <section className="py-12 bg-[#0F172A]">
-        <h2 className="text-3xl font-semibold mb-8 text-center text-[#adef0e]">Popular Courts</h2>
-        <div className="mx-auto w-[90%]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courtCards()}
           </div>
         </div>
       </section>

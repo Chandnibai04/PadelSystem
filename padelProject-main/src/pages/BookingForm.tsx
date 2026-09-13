@@ -66,7 +66,8 @@ export default function BookingForm() {
     const fetchCourts = async () => {
       try {
         setIsLoadingCourts(true);
-        const response = await fetch("http://localhost:5000/api/courts");
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://padel-backend-lfb6z27gr-chandni-bais-projects.vercel.app";
+        const response = await fetch(`${API_BASE_URL}/api/courts`);
         if (!response.ok) throw new Error(`Failed to fetch courts: ${response.status}`);
         
         const data: Court[] = await response.json();

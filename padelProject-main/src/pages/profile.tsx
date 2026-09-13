@@ -23,7 +23,9 @@ interface UserData {
   profilePhoto: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const VITE_API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://padel-backend-lfb6z27gr-chandni-bais-projects.vercel.app";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -94,9 +96,9 @@ const Profile = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      
+
       await axios.put(
-        `${API_URL}/api/users/${userData.id}`,
+        `${VITE_API_BASE_URL}/api/users/${userData.id}`,
         updatedUserData,
         {
           headers: {

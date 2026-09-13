@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://padel-backend-lfb6z27gr-chandni-bais-projects.vercel.app";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/api/users/login`, {
+      const res = await axios.post(`${VITE_API_BASE_URL}/api/users/login`, {
         emailOrPhone,
         password,
       });
@@ -62,7 +62,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/api/users/forgot-password`, {
+      const res = await axios.post(`${VITE_API_BASE_URL}/api/users/forgot-password`, {
         email: emailOrPhone,
       });
       toast.success(res.data.message || "✅ Reset link sent to email!");
@@ -85,7 +85,7 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${API_URL}/api/users/reset-password/${token}`,
+        `${VITE_API_BASE_URL}/api/users/reset-password/${token}`,
         { password, confirmPassword }
       );
       toast.success(res.data.message || "✅ Password reset successful!");
