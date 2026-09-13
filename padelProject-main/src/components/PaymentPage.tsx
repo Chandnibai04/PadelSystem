@@ -63,7 +63,7 @@ export default function PaymentPage() {
         const usdCents = Math.round((calculateTotalAmount() / PKR_TO_USD) * 100);
         if (usdCents < 50) throw new Error("Minimum payment is $0.50");
 
-        // 1️⃣ Create payment intent from backend
+        // 1️⃣ Create payment intent from backend (Trailing slash removed)
         const res = await fetch(`${API_BASE_URL}/api/payments/create-payment-intent`, {
           method: "POST",
           headers: {
@@ -97,7 +97,7 @@ export default function PaymentPage() {
         console.log("Payment intent status:", paymentIntent?.status);
 
         if (paymentIntent?.status === "succeeded" || paymentIntent?.status === "processing") {
-          // Create booking in database after successful/processing payment
+          // Create booking in database after successful/processing payment (Trailing slash removed)
           const bookingResponse = await fetch(`${API_BASE_URL}/api/bookings`, {
             method: "POST",
             headers: {
@@ -242,7 +242,7 @@ export default function PaymentPage() {
                     return;
                   }
 
-                  // Create booking in database for non-card payments
+                  // Create booking in database for non-card payments (Trailing slash removed)
                   const bookingResponse = await fetch(`${API_BASE_URL}/api/bookings`, {
                     method: "POST",
                     headers: {
