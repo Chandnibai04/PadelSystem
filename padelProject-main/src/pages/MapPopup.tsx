@@ -35,15 +35,15 @@ interface MapPopupProps {
 }
 
 const MapPopup: React.FC<MapPopupProps> = ({ onClose, onSelectLocation, initialLocation }) => {
-  const [selectedCoords, setSelectedCoords] = useState<{ lat: number, lng: number } | null>(null);
   const [selectedAddress, setSelectedAddress] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   // Mock map initialization
   useEffect(() => {
     // In a real implementation, you would initialize your map here
-    console.log("Map initialized");
-  }, []);
+    console.log("Map initialized", initialLocation);
+  }, [initialLocation]);
 
   const handleMapClick = async () => {
     // In a real implementation, you would get actual coordinates from the map

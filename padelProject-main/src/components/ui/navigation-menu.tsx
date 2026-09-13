@@ -5,7 +5,7 @@ import { LogInIcon, MenuIcon, XIcon, Globe, User, ChevronDown, ChevronUp, LogOut
 export function NavigationMenu() {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [languageOpen, setLanguageOpen] = React.useState(false);
-  const [language, setLanguage] = React.useState("English");
+  // const [language, setLanguage] = React.useState("English");
   const [isScrolled, setIsScrolled] = React.useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -88,7 +88,7 @@ export function NavigationMenu() {
               className="flex items-center gap-1 text-sm px-3 py-2 rounded-md text-[#E2E8F0] hover:bg-[#1E293B] transition-all"
             >
               <Globe className="h-4 w-4" />
-              {language}
+              const [language] = React.useState("English");
               {languageOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
           </div>

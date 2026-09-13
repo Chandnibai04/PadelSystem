@@ -579,7 +579,7 @@ const Home = () => {
     return R * c;
   };
 
-  const handleLocationSelect = (location: string, latlng: L.LatLng) => {
+  const handleLocationSelect = (location: string, _latlng: L.LatLng) => {
     setArea(location);
     setOpenMapPopup(false);
   };
