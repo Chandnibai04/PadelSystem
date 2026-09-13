@@ -1,12 +1,10 @@
 import express from "express";
 import cors from "cors";
 import userRoutes from "./routes/user.routes.js";
-import emailRoutes from "./routes/email.routes.js";  // ✅ ./routes/ correct path
-import bookingRoutes from "./routes/booking.routes.js"; // ✅ import booking routes
-import courtRoutes from "./routes/courtRoutes.js"; // ✅ import court routes
+import emailRoutes from "./routes/email.routes.js";
+import bookingRoutes from "./routes/booking.routes.js";
+import courtRoutes from "./routes/courtRoutes.js";
 import paymentRoutes from "./routes/payment.routes.js";
-
-
 
 const app = express();
 
@@ -16,21 +14,28 @@ app.use((req, res, next) => {
   next();
 });
 
+// Configure CORS for local development and Vercel deployments
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    /\.vercel\.app$/ // Allows all Vercel frontend deployments
+  ],
   credentials: true
 }));
+
 app.use(express.json());
 
+// Root health-check endpoint
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "success", message: "Padel System Backend API is active!" });
+});
+
+// API Routes
 app.use("/api/users", userRoutes);
-
-// ✅ Mount karo with prefix
-app.use("/api/bookings", bookingRoutes);  // ✅ mount booking routes
-
+app.use("/api/bookings", bookingRoutes);
 app.use("/api/email", emailRoutes);
-
 app.use("/api/courts", courtRoutes);
-
 app.use("/api/payments", paymentRoutes);
 
 // Error handling middleware
